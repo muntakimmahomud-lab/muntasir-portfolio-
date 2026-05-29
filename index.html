@@ -1,0 +1,2608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muntasir — CSE @ UIU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===========================
+       CSS VARIABLES (COLORS & FONTS)
+       ===========================
+       এখানে পুরো website এর color scheme define করা হয়েছে।
+       যদি color change করতে চাও, শুধু এই section এ change করো।
+       Dark theme use করা হয়েছে। */
+    :root {
+      --bg-base:      #0a0a0f;   /* সবচেয়ে গাঢ় background */
+      --bg-surface:   #111118;   /* card/section background */
+      --bg-elevated:  #1a1a24;   /* hover state background */
+      --bg-highlight: #22222e;   /* selected item background */
+
+      --accent:       #7c6af7;   /* মূল purple accent color */
+      --accent-dim:   #4a3fa0;   /* darker version of accent */
+      --accent-glow:  rgba(124,106,247,0.15); /* accent এর soft glow */
+
+      --green:        #3dd68c;   /* সবুজ রঙ (prerequisite check mark এ) */
+      --amber:        #f5a623;   /* কমলা (tag color) */
+      --red:          #e05252;   /* লাল (error/warning) */
+
+      --text-primary:   #e8e8f0; /* মূল লেখার রঙ */
+      --text-secondary: #8888a8; /* secondary লেখা (ছোট বিবরণ) */
+      --text-muted:     #55556a; /* dim/মৃদু লেখা */
+
+      --border:       rgba(255,255,255,0.07); /* border color */
+      --border-hover: rgba(255,255,255,0.15); /* hover এ border */
+
+      --font-display: 'Syne', sans-serif;   /* heading font */
+      --font-body:    'DM Sans', sans-serif; /* body text font */
+      --font-mono:    'DM Mono', monospace;  /* code font */
+
+      --radius-sm:  6px;
+      --radius-md:  12px;
+      --radius-lg:  18px;
+      --radius-xl:  24px;
+
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ===========================
+       RESET & BASE STYLES
+       =========================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 1.7;
+      overflow-x: hidden;
+      /* Background এ একটা subtle grid pattern দেওয়া হয়েছে Notion/Obsidian এর মতো feel আনতে */
+      background-image:
+        linear-gradient(rgba(124,106,247,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,106,247,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; font-family: inherit; }
+    input { font-family: inherit; }
+    ul, ol { list-style: none; }
+    img { max-width: 100%; }
+
+    /* ===========================
+       SCROLLBAR STYLING
+       =========================== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+
+    /* ===========================
+       NAVBAR — Top navigation bar
+       ===========================
+       Left side: Name + title
+       Right side: Hamburger menu
+       position: sticky মানে scroll করলেও উপরে থাকবে */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(1rem, 4vw, 3rem);
+      height: 64px;
+      background: rgba(10, 10, 15, 0.85);
+      backdrop-filter: blur(20px); /* glass effect */
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .nav-brand-name {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+    .nav-brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+    }
+
+    /* Hamburger menu button */
+    .nav-menu-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 10px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+    .nav-menu-btn span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--text-secondary);
+      border-radius: 2px;
+      transition: var(--transition);
+    }
+    .nav-menu-btn:hover { border-color: var(--border-hover); }
+    .nav-menu-btn:hover span { background: var(--text-primary); }
+
+    /* ===========================
+       FULL SCREEN NAV OVERLAY
+       ===========================
+       Hamburger click করলে full screen menu আসে
+       opacity + pointer-events দিয়ে show/hide করা হয় */
+    .nav-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(10, 10, 15, 0.97);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      opacity: 0;
+      pointer-events: none; /* invisible এ click কাজ করবে না */
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    .nav-overlay.open {
+      opacity: 1;
+      pointer-events: all; /* visible হলে click কাজ করবে */
+    }
+
+    .nav-overlay-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 20px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-overlay-close:hover { color: var(--text-primary); border-color: var(--border-hover); }
+
+    .nav-overlay a {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: -1px;
+      transition: color 0.2s ease, transform 0.2s ease;
+      display: inline-block;
+    }
+    .nav-overlay a:hover {
+      color: var(--accent);
+      transform: translateX(10px); /* hover এ ডানে সরে */
+    }
+
+    /* ===========================
+       HERO SECTION
+       ===========================
+       Homepage এর প্রথম big section */
+    .hero {
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem clamp(1rem, 5vw, 4rem);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background এ glowing orb effect */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(124,106,247,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(124,106,247,0.3);
+      border-radius: 100px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      margin-bottom: 2rem;
+      letter-spacing: 0.5px;
+    }
+    /* Badge এর blink করা dot */
+    .hero-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 10vw, 7rem);
+      font-weight: 800;
+      letter-spacing: -3px;
+      line-height: 1.0;
+      margin-bottom: 1.5rem;
+      /* Gradient text effect */
+      background: linear-gradient(135deg, #e8e8f0 0%, #8888a8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .hero-tagline {
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 3rem;
+      font-family: var(--font-mono);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Primary button — filled */
+    .btn-primary {
+      padding: 13px 28px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover {
+      background: #9080ff;
+      transform: translateY(-2px); /* hover এ উপরে উঠে */
+    }
+
+    /* Secondary button — outlined */
+    .btn-secondary {
+      padding: 13px 28px;
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 14px;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-secondary:hover {
+      background: var(--bg-elevated);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ===========================
+       SEARCH BAR
+       =========================== */
+    .search-container {
+      padding: 2rem clamp(1rem, 4vw, 3rem) 0;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      transition: var(--transition);
+    }
+    .search-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .search-wrapper svg {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .search-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: var(--font-mono);
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    /* Search results dropdown */
+    .search-results {
+      position: relative;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .search-results-list {
+      position: absolute;
+      top: 8px;
+      left: clamp(1rem, 4vw, 3rem);
+      right: clamp(1rem, 4vw, 3rem);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      z-index: 100;
+      display: none;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .search-results-list.visible { display: block; }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .search-result-item:hover { background: var(--bg-highlight); }
+    .search-result-tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .search-result-text { font-size: 13px; color: var(--text-primary); }
+
+    /* ===========================
+       MAIN LAYOUT — Page Content
+       ===========================
+       .page-wrapper এর ভেতরে সব main content থাকে
+       display:none মানে শুধু active page দেখাবে */
+    .page-wrapper { padding: 2rem clamp(1rem, 4vw, 3rem) 4rem; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ===========================
+       SECTION HEADER
+       =========================== */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--text-primary);
+    }
+    .section-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ===========================
+       BREADCRUMB — কোথায় আছো বোঝার জন্য
+       =========================== */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .breadcrumb-item { cursor: pointer; transition: color 0.2s; }
+    .breadcrumb-item:hover { color: var(--accent); }
+    .breadcrumb-sep { color: var(--text-muted); }
+    .breadcrumb-current { color: var(--text-secondary); }
+
+    /* ===========================
+       CARD GRID — Cards সাজানোর জন্য grid
+       =========================== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .card-grid-sm {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+
+    /* Main card style */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    /* Card এ hover করলে বাম দিক থেকে colored line দেখা যায় */
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.2s ease;
+      border-radius: 0 2px 2px 0;
+    }
+    .card:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+    .card:hover::before { transform: scaleY(1); }
+
+    .card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+    }
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 3px 8px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .tag-accent { background: var(--accent-glow); border-color: rgba(124,106,247,0.3); color: var(--accent); }
+    .tag-green { background: rgba(61,214,140,0.1); border-color: rgba(61,214,140,0.3); color: var(--green); }
+    .tag-amber { background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.3); color: var(--amber); }
+
+    /* ===========================
+       SUB-CARD — Course এর ভেতরে Notes/Assignments/Solves
+       =========================== */
+    .sub-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sub-card:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border-hover);
+    }
+    .sub-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .sub-card-info { flex: 1; }
+    .sub-card-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .sub-card-count { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+    .sub-card-arrow { color: var(--text-muted); font-size: 18px; }
+
+    /* ===========================
+       NOTE/CONTENT VIEWER
+       ===========================
+       যখন একটা note খোলা হবে, তখন এটা দেখাবে
+       .content-body তে markdown-style content দেখাবে */
+    .content-viewer {
+      max-width: 860px;
+    }
+    .content-header {
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .content-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .content-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    .content-body {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    .content-body h2 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 2.5rem 0 1rem;
+      letter-spacing: -0.5px;
+    }
+    .content-body h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2rem 0 0.75rem;
+    }
+    .content-body p { margin-bottom: 1rem; }
+    .content-body ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .content-body ul li {
+      list-style: disc;
+      margin-bottom: 0.4rem;
+    }
+    .content-body ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .content-body ol li {
+      list-style: decimal;
+      margin-bottom: 0.4rem;
+    }
+    /* Code block style (Obsidian এর মতো) */
+    .content-body pre {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .content-body code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+    /* Math formula style */
+    .math-block {
+      background: var(--bg-elevated);
+      border-left: 3px solid var(--accent);
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--green);
+    }
+    /* Info box style */
+    .info-box {
+      background: rgba(124,106,247,0.08);
+      border: 1px solid rgba(124,106,247,0.25);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      font-size: 13.5px;
+    }
+    .info-box strong { color: var(--accent); }
+
+    /* ===========================
+       PREREQUISITE / KNOWLEDGE GRAPH SECTION
+       ===========================
+       এটাই সবচেয়ে unique feature
+       একটা topic এর আগে কী পড়তে হবে, পরে কী পড়তে হবে */
+    .prereq-section {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 600px) { .prereq-section { grid-template-columns: 1fr; } }
+    .prereq-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+    .prereq-box-title {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+    .prereq-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+    }
+    .prereq-check { color: var(--green); font-size: 14px; }
+    .prereq-arrow { color: var(--accent); font-size: 14px; }
+    .prereq-item span { cursor: pointer; }
+    .prereq-item span:hover { color: var(--accent); }
+
+    /* ===========================
+       BLOG SECTION
+       ===========================
+       Blog cards বড় হয়, cover image সহ */
+    .blog-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .blog-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .blog-card-cover {
+      height: 200px;
+      background: linear-gradient(135deg, var(--accent-dim), var(--bg-elevated));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Cover image এর উপরে pattern overlay */
+    .blog-card-cover::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, var(--bg-surface));
+    }
+    .blog-card-body { padding: 1.25rem; }
+    .blog-card-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-bottom: 0.5rem;
+    }
+    .blog-card-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+    .blog-card-excerpt {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; /* 2 line এর বেশি দেখাবে না */
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .blog-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ===========================
+       RECENT SECTION (Homepage এ)
+       ===========================
+       সাম্প্রতিক notes ও blog posts */
+    .recent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 4rem;
+    }
+    @media (max-width: 768px) { .recent-grid { grid-template-columns: 1fr; } }
+
+    .recent-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+    .recent-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .recent-box-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .recent-see-all {
+      font-size: 11px;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      cursor: pointer;
+    }
+    .recent-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .recent-item:last-child { border-bottom: none; }
+    .recent-item:hover .recent-item-title { color: var(--accent); }
+    .recent-item-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .recent-item-info { flex: 1; }
+    .recent-item-title { font-size: 13.5px; color: var(--text-primary); transition: color 0.2s; }
+    .recent-item-meta { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+    /* ===========================
+       ABOUT SECTION
+       =========================== */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 3rem;
+      max-width: 900px;
+    }
+    @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; } }
+
+    .about-avatar {
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 200px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, var(--accent-dim), var(--bg-elevated));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+      border: 2px solid var(--border);
+    }
+    .about-name {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 0.5rem;
+    }
+    .about-role {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      margin-bottom: 1.5rem;
+    }
+    .about-bio {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+    }
+    .about-skills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .skill-tag {
+      padding: 5px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+
+    /* ===========================
+       CONTACT SECTION
+       =========================== */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      max-width: 700px;
+    }
+    .contact-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .contact-card:hover { border-color: var(--accent); background: var(--bg-elevated); }
+    .contact-icon { font-size: 1.5rem; }
+    .contact-label { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+    .contact-value { font-size: 13.5px; color: var(--text-primary); }
+
+    /* ===========================
+       STATS ROW — Homepage এ numbers দেখানোর জন্য
+       =========================== */
+    .stats-row {
+      display: flex;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-top: 4rem;
+    }
+    .stat-item {
+      flex: 1;
+      background: var(--bg-surface);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-top: 4px;
+    }
+
+    /* ===========================
+       BACK BUTTON
+       =========================== */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: var(--font-mono);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ===========================
+       FOOTER
+       =========================== */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem clamp(1rem, 4vw, 3rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    .footer-brand { color: var(--text-secondary); }
+
+    /* ===========================
+       DIVIDER
+       =========================== */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem 0;
+    }
+
+    /* ===========================
+       PAGE ENTRY ANIMATION
+       ===========================
+       নতুন page/section এ গেলে fade-in হয় */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .page.active { animation: fadeInUp 0.3s ease forwards; }
+
+    /* ===========================
+       RESPONSIVE — Mobile support
+       =========================== */
+    @media (max-width: 480px) {
+      .hero-title { letter-spacing: -1.5px; }
+      .stats-row { flex-direction: column; gap: 0; }
+      .prereq-section { grid-template-columns: 1fr; }
+    }
+
+    /* ===========================
+       HIGHLIGHT TEXT
+       =========================== */
+    .highlight { color: var(--accent); }
+
+    /* ===========================
+       PDF VIEWER
+       ===========================
+       Note এর ভেতরে PDF দেখানোর জন্য।
+       iframe দিয়ে browser এর built-in PDF viewer use করা হয়। */
+    .pdf-section {
+      margin-top: 2rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .pdf-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pdf-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+    .pdf-icon { font-size: 1.2rem; }
+    .pdf-download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    .pdf-download-btn:hover { background: #9080ff; }
+    /* iframe এ PDF embed হবে — height 600px দেওয়া হয়েছে */
+    .pdf-embed {
+      width: 100%;
+      height: 600px;
+      border: none;
+      background: var(--bg-surface);
+      display: block;
+    }
+    /* Mobile এ height কমানো */
+    @media (max-width: 600px) { .pdf-embed { height: 400px; } }
+
+    /* "PDF নেই" placeholder */
+    .pdf-placeholder {
+      padding: 3rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+    .pdf-placeholder-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* ===========================
+       PROFILE IMAGE
+       ===========================
+       About page এ তোমার ছবি দেখানোর জন্য।
+       img tag দিয়ে real photo, না থাকলে emoji fallback। */
+    .about-avatar-img {
+      width: 100%;
+      max-width: 200px;
+      aspect-ratio: 1;
+      border-radius: var(--radius-xl);
+      object-fit: cover; /* ছবি crop করে square বানাবে */
+      border: 2px solid var(--border);
+      display: block;
+    }
+    /* ছবি load না হলে এই emoji দেখাবে */
+    .about-avatar-fallback {
+      width: 100%;
+      max-width: 200px;
+      aspect-ratio: 1;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, var(--accent-dim), var(--bg-elevated));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+      border: 2px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVBAR
+       এটা সবসময় উপরে থাকে (position: sticky)
+       বাম দিকে name, ডান দিকে menu button
+  ============================================================ -->
+  <nav class="navbar">
+    <div class="nav-brand" onclick="showPage('home')" style="cursor:pointer;">
+      <div class="nav-brand-name">Muntasir</div>
+      <div class="nav-brand-sub">CSE Student · UIU</div>
+    </div>
+    <button class="nav-menu-btn" onclick="toggleNav()" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ============================================================
+       FULLSCREEN NAV OVERLAY
+       Hamburger click করলে এটা দেখায়
+       opacity 0 → 1 transition দিয়ে smooth হয়
+  ============================================================ -->
+  <div class="nav-overlay" id="navOverlay">
+    <button class="nav-overlay-close" onclick="toggleNav()">✕</button>
+    <a onclick="showPage('home');     toggleNav();">Home</a>
+    <a onclick="showPage('math');     toggleNav();">Math</a>
+    <a onclick="showPage('prog');     toggleNav();">Programming</a>
+    <a onclick="showPage('nondept');  toggleNav();">Non Department</a>
+    <a onclick="showPage('extra');    toggleNav();">Extra Curricular</a>
+    <a onclick="showPage('about');    toggleNav();">About</a>
+    <a onclick="showPage('contact');  toggleNav();">Contact</a>
+  </div>
+
+  <!-- ============================================================
+       SEARCH BAR
+       Global search — সব notes, blogs, assignments খোঁজা যাবে
+       Input এ type করলে JS filter করে results দেখায়
+  ============================================================ -->
+  <div class="search-container" id="searchContainer">
+    <div class="search-wrapper">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input class="search-input" id="searchInput" type="text"
+             placeholder="Search notes, blogs, topics..." autocomplete="off" />
+    </div>
+  </div>
+  <div class="search-results" id="searchResultsContainer">
+    <div class="search-results-list" id="searchResultsList"></div>
+  </div>
+
+  <!-- ============================================================
+       MAIN PAGES WRAPPER
+       প্রতিটা "page" আলাদা div।
+       JavaScript দিয়ে active class লাগিয়ে/তুলে দেখানো হয়।
+  ============================================================ -->
+  <div class="page-wrapper">
+
+    <!-- =============================
+         HOME PAGE
+    ============================== -->
+    <div class="page active" id="page-home">
+
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-badge">Available for internship 2025</div>
+        <h1 class="hero-title">Hi, I'm<br/>Muntasir</h1>
+        <p class="hero-sub">CSE Student at United International University</p>
+        <p class="hero-tagline">Building knowledge one concept at a time.</p>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="showPage('math')">
+            📚 Explore Notes
+          </button>
+          <button class="btn-secondary" onclick="showPage('extra')">
+            ✍️ Read Blogs
+          </button>
+        </div>
+      </section>
+
+      <!-- Stats Bar — key numbers -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-number">40+</div>
+          <div class="stat-label">Notes</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">5</div>
+          <div class="stat-label">Courses</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">12</div>
+          <div class="stat-label">Blog Posts</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">4</div>
+          <div class="stat-label">Semesters</div>
+        </div>
+      </div>
+
+      <!-- Recent Notes + Blogs (2-column grid) -->
+      <div class="recent-grid">
+        <!-- Recent Notes -->
+        <div class="recent-box">
+          <div class="recent-box-header">
+            <div class="recent-box-title">📓 Recent Notes</div>
+            <span class="recent-see-all" onclick="showPage('math')">see all →</span>
+          </div>
+          <!-- প্রতিটা item click করলে সেই note টা খুলবে -->
+          <div class="recent-item" onclick="openNote('greens-theorem')">
+            <div class="recent-item-dot"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Green's Theorem</div>
+              <div class="recent-item-meta">Vector Calculus · 3 days ago</div>
+            </div>
+          </div>
+          <div class="recent-item" onclick="openNote('bst')">
+            <div class="recent-item-dot"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Binary Search Tree</div>
+              <div class="recent-item-meta">Data Structure · 5 days ago</div>
+            </div>
+          </div>
+          <div class="recent-item" onclick="openNote('diff-eq')">
+            <div class="recent-item-dot"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Differential Equation — Intro</div>
+              <div class="recent-item-meta">Differential Equation · 1 week ago</div>
+            </div>
+          </div>
+          <div class="recent-item" onclick="openNote('oop-inheritance')">
+            <div class="recent-item-dot"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Inheritance in OOP</div>
+              <div class="recent-item-meta">OOP · 2 weeks ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Blogs -->
+        <div class="recent-box">
+          <div class="recent-box-header">
+            <div class="recent-box-title">✍️ Recent Blogs</div>
+            <span class="recent-see-all" onclick="showPage('extra')">see all →</span>
+          </div>
+          <div class="recent-item" onclick="openBlog('bandarban')">
+            <div class="recent-item-dot" style="background:var(--green)"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Bandarban Tour 2024</div>
+              <div class="recent-item-meta">Travel · Dec 2024</div>
+            </div>
+          </div>
+          <div class="recent-item" onclick="openBlog('debate')">
+            <div class="recent-item-dot" style="background:var(--amber)"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Debate Competition</div>
+              <div class="recent-item-meta">Competition · Nov 2024</div>
+            </div>
+          </div>
+          <div class="recent-item" onclick="openBlog('science-fair')">
+            <div class="recent-item-dot" style="background:var(--red)"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Science Fair Project</div>
+              <div class="recent-item-meta">Academic · Oct 2024</div>
+            </div>
+          </div>
+          <div class="recent-item" onclick="openBlog('volunteering')">
+            <div class="recent-item-dot" style="background:var(--accent)"></div>
+            <div class="recent-item-info">
+              <div class="recent-item-title">Volunteering Experience</div>
+              <div class="recent-item-meta">Personal · Sep 2024</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /recent-grid -->
+
+    </div><!-- /page-home -->
+
+
+    <!-- =============================
+         MATH PAGE
+         Math section এর main page
+         এখানে সব Math courses দেখায়
+    ============================== -->
+    <div class="page" id="page-math">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Math</span>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">📐 Mathematics</div>
+          <div class="section-desc">All math courses from UIU curriculum</div>
+        </div>
+      </div>
+      <!-- 5টা Math course card -->
+      <div class="card-grid">
+        <div class="card" onclick="showCourse('fund-calc')">
+          <span class="card-icon">∫</span>
+          <div class="card-title">Fundamental Calculus</div>
+          <div class="card-desc">Limits, derivatives, integrals, and their applications.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 1101</span><span class="tag">8 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('vector-calc')">
+          <span class="card-icon">∇</span>
+          <div class="card-title">Vector Calculus</div>
+          <div class="card-desc">Gradient, divergence, curl, and line/surface integrals.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 1201</span><span class="tag">12 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('diff-eq')">
+          <span class="card-icon">∂</span>
+          <div class="card-title">Differential Equation</div>
+          <div class="card-desc">ODEs, PDEs, Laplace transforms, and series solutions.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 2101</span><span class="tag">10 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('linear-alg')">
+          <span class="card-icon">⊗</span>
+          <div class="card-title">Linear Algebra</div>
+          <div class="card-desc">Vectors, matrices, eigenvalues, and linear transformations.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 2201</span><span class="tag">9 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('num-analysis')">
+          <span class="card-icon">≈</span>
+          <div class="card-title">Numerical Analysis</div>
+          <div class="card-desc">Root finding, interpolation, numerical integration.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 3101</span><span class="tag">7 notes</span></div>
+        </div>
+      </div>
+    </div><!-- /page-math -->
+
+
+    <!-- =============================
+         PROGRAMMING PAGE
+    ============================== -->
+    <div class="page" id="page-prog">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Programming</span>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">💻 Programming</div>
+          <div class="section-desc">CS core and programming courses</div>
+        </div>
+      </div>
+      <div class="card-grid">
+        <div class="card" onclick="showCourse('c-prog')">
+          <span class="card-icon">🔧</span>
+          <div class="card-title">C Programming</div>
+          <div class="card-desc">Fundamentals, pointers, memory management, file I/O.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 1001</span><span class="tag">15 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('ds')">
+          <span class="card-icon">🌲</span>
+          <div class="card-title">Data Structure</div>
+          <div class="card-desc">Arrays, linked lists, trees, graphs, and hash tables.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 2001</span><span class="tag">18 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('algo')">
+          <span class="card-icon">⚡</span>
+          <div class="card-title">Algorithm</div>
+          <div class="card-desc">Sorting, searching, dynamic programming, graph algorithms.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 2002</span><span class="tag">14 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('oop')">
+          <span class="card-icon">🧩</span>
+          <div class="card-title">OOP</div>
+          <div class="card-desc">Classes, inheritance, polymorphism, design patterns.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 2003</span><span class="tag">11 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('db')">
+          <span class="card-icon">🗄️</span>
+          <div class="card-title">Database</div>
+          <div class="card-desc">SQL, normalization, ER diagrams, transaction management.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 3001</span><span class="tag">10 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('webdev')">
+          <span class="card-icon">🌐</span>
+          <div class="card-title">Web Development</div>
+          <div class="card-desc">HTML, CSS, JavaScript, React, and backend basics.</div>
+          <div class="card-meta"><span class="tag tag-accent">CSE 3002</span><span class="tag">20 notes</span></div>
+        </div>
+      </div>
+    </div><!-- /page-prog -->
+
+
+    <!-- =============================
+         NON DEPARTMENT PAGE
+    ============================== -->
+    <div class="page" id="page-nondept">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Non Department</span>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">📖 Non Department</div>
+          <div class="section-desc">General education and elective courses</div>
+        </div>
+      </div>
+      <div class="card-grid">
+        <div class="card" onclick="showCourse('economics')">
+          <span class="card-icon">📊</span>
+          <div class="card-title">Economics</div>
+          <div class="card-desc">Micro and macroeconomics, market structures, GDP.</div>
+          <div class="card-meta"><span class="tag tag-amber">GEN 1001</span><span class="tag">6 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('sociology')">
+          <span class="card-icon">🌍</span>
+          <div class="card-title">Sociology</div>
+          <div class="card-desc">Social structures, institutions, and human behavior.</div>
+          <div class="card-meta"><span class="tag tag-amber">GEN 1002</span><span class="tag">5 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('comm-skills')">
+          <span class="card-icon">🗣️</span>
+          <div class="card-title">Communication Skills</div>
+          <div class="card-desc">Writing, presentation, professional communication.</div>
+          <div class="card-meta"><span class="tag tag-amber">GEN 1003</span><span class="tag">8 notes</span></div>
+        </div>
+        <div class="card" onclick="showCourse('bangla')">
+          <span class="card-icon">🔤</span>
+          <div class="card-title">Bangla Language</div>
+          <div class="card-desc">Bangla grammar, literature, and composition.</div>
+          <div class="card-meta"><span class="tag tag-amber">GEN 1004</span><span class="tag">4 notes</span></div>
+        </div>
+      </div>
+    </div><!-- /page-nondept -->
+
+
+    <!-- =============================
+         EXTRA CURRICULAR — BLOG PAGE
+    ============================== -->
+    <div class="page" id="page-extra">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Extra Curricular</span>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">🌟 Extra Curricular</div>
+          <div class="section-desc">Life beyond the classroom — tours, events, reflections</div>
+        </div>
+      </div>
+      <!-- Blog card grid -->
+      <div class="card-grid">
+        <div class="blog-card" onclick="openBlog('bandarban')">
+          <div class="blog-card-cover" style="background:linear-gradient(135deg,#1a3a2a,#0d1f17);">🏔️</div>
+          <div class="blog-card-body">
+            <div class="blog-card-date">December 15, 2024</div>
+            <div class="blog-card-title">Bandarban Tour 2024</div>
+            <div class="blog-card-excerpt">An unforgettable trip to the hills of Bandarban with my university friends. Three days of trekking, waterfalls, and stargazing.</div>
+            <div class="blog-card-tags">
+              <span class="tag tag-green">Travel</span>
+              <span class="tag">Friends</span>
+              <span class="tag">Trekking</span>
+            </div>
+          </div>
+        </div>
+        <div class="blog-card" onclick="openBlog('debate')">
+          <div class="blog-card-cover" style="background:linear-gradient(135deg,#1a1a3a,#0d0d1f);">🎤</div>
+          <div class="blog-card-body">
+            <div class="blog-card-date">November 20, 2024</div>
+            <div class="blog-card-title">Inter-University Debate Competition</div>
+            <div class="blog-card-excerpt">Represented UIU in the annual inter-university debate. The topic was AI and its ethical implications — right in my lane!</div>
+            <div class="blog-card-tags">
+              <span class="tag tag-accent">Competition</span>
+              <span class="tag">Public Speaking</span>
+            </div>
+          </div>
+        </div>
+        <div class="blog-card" onclick="openBlog('science-fair')">
+          <div class="blog-card-cover" style="background:linear-gradient(135deg,#2a1a1a,#1f0d0d);">🔬</div>
+          <div class="blog-card-body">
+            <div class="blog-card-date">October 5, 2024</div>
+            <div class="blog-card-title">UIU Science Fair 2024</div>
+            <div class="blog-card-excerpt">Built a smart plant watering system using Arduino and presented it at the annual science fair. Won second place!</div>
+            <div class="blog-card-tags">
+              <span class="tag tag-amber">Science</span>
+              <span class="tag">Arduino</span>
+              <span class="tag">IoT</span>
+            </div>
+          </div>
+        </div>
+        <div class="blog-card" onclick="openBlog('volunteering')">
+          <div class="blog-card-cover" style="background:linear-gradient(135deg,#1a2a1a,#0d1f0d);">🤝</div>
+          <div class="blog-card-body">
+            <div class="blog-card-date">September 10, 2024</div>
+            <div class="blog-card-title">Volunteering at ICPC</div>
+            <div class="blog-card-excerpt">Volunteered at the ICPC regional contest held at UIU. An amazing experience seeing top programmers solve problems.</div>
+            <div class="blog-card-tags">
+              <span class="tag tag-green">Volunteering</span>
+              <span class="tag">Programming</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /page-extra -->
+
+
+    <!-- =============================
+         ABOUT PAGE
+    ============================== -->
+    <div class="page" id="page-about">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">About</span>
+      </div>
+      <div class="about-grid">
+        <div>
+          <!--
+            তোমার ছবি দেওয়ার নিয়ম:
+            ১. তোমার ছবিটা "images" নামে folder বানিয়ে তার ভেতরে রাখো
+            ২. ছবির নাম দাও "profile.jpg" (বা .png)
+            ৩. নিচের src="images/profile.jpg" ঠিকই আছে, শুধু ছবি রাখলেই কাজ হবে
+
+            ছবি না থাকলে আপনাআপনি 👨‍💻 emoji দেখাবে (onerror এর কারণে)
+          -->
+          <img
+            src="images/profile.jpg"
+            alt="Muntasir"
+            class="about-avatar-img"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          />
+          <div class="about-avatar-fallback" style="display:none;">👨‍💻</div>
+        </div>
+        <div>
+          <div class="about-name">Muntasir</div>
+          <div class="about-role">CSE Student @ United International University</div>
+          <p class="about-bio">
+            I'm a Computer Science and Engineering student at UIU, Dhaka. I love solving problems, learning new concepts, and documenting my knowledge journey.
+          </p>
+          <p class="about-bio">
+            This website is my personal digital library — a place where I store all my university notes, assignments, solved problems, and personal experiences so they remain accessible for years to come.
+          </p>
+          <div class="about-skills">
+            <span class="skill-tag">C Programming</span>
+            <span class="skill-tag">Data Structures</span>
+            <span class="skill-tag">Algorithms</span>
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">Java</span>
+            <span class="skill-tag">Web Dev</span>
+            <span class="skill-tag">Linear Algebra</span>
+            <span class="skill-tag">Calculus</span>
+          </div>
+        </div>
+      </div>
+    </div><!-- /page-about -->
+
+
+    <!-- =============================
+         CONTACT PAGE
+    ============================== -->
+    <div class="page" id="page-contact">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Contact</span>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">📬 Get in Touch</div>
+          <div class="section-desc">Feel free to reach out!</div>
+        </div>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="contact-icon">📧</div>
+          <div>
+            <div class="contact-label">Email</div>
+            <div class="contact-value">muntasir@uiu.ac.bd</div>
+          </div>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">💼</div>
+          <div>
+            <div class="contact-label">LinkedIn</div>
+            <div class="contact-value">linkedin.com/in/muntasir</div>
+          </div>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">🐙</div>
+          <div>
+            <div class="contact-label">GitHub</div>
+            <div class="contact-value">github.com/muntasir</div>
+          </div>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">🏫</div>
+          <div>
+            <div class="contact-label">University</div>
+            <div class="contact-value">UIU, Dhaka</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /page-contact -->
+
+
+    <!-- =============================
+         COURSE PAGE (Dynamic)
+         ===========================
+         এই page টা dynamic — যেকোনো course click করলে
+         JavaScript এই page এ data inject করে দেখায়।
+         3টা sub-section: Notes, Assignments, Question Solves
+    ============================== -->
+    <div class="page" id="page-course">
+      <button class="back-btn" id="courseBackBtn">← Back</button>
+      <div class="breadcrumb" id="courseBreadcrumb"></div>
+      <div class="section-header">
+        <div>
+          <div class="section-title" id="courseTitle">Course Name</div>
+          <div class="section-desc" id="courseDesc">Course description</div>
+        </div>
+      </div>
+      <!-- 3 sub-sections cards -->
+      <div style="display:grid; grid-template-columns:1fr; gap:0.75rem; max-width:500px;">
+        <div class="sub-card" onclick="showSubSection('notes')">
+          <div class="sub-card-icon">📝</div>
+          <div class="sub-card-info">
+            <div class="sub-card-title">Notes</div>
+            <div class="sub-card-count" id="notesCount">0 notes</div>
+          </div>
+          <div class="sub-card-arrow">›</div>
+        </div>
+        <div class="sub-card" onclick="showSubSection('assignments')">
+          <div class="sub-card-icon">📋</div>
+          <div class="sub-card-info">
+            <div class="sub-card-title">Assignments</div>
+            <div class="sub-card-count" id="assignCount">0 assignments</div>
+          </div>
+          <div class="sub-card-arrow">›</div>
+        </div>
+        <div class="sub-card" onclick="showSubSection('solves')">
+          <div class="sub-card-icon">✅</div>
+          <div class="sub-card-info">
+            <div class="sub-card-title">Question Solves</div>
+            <div class="sub-card-count" id="solvesCount">0 problems</div>
+          </div>
+          <div class="sub-card-arrow">›</div>
+        </div>
+      </div>
+    </div><!-- /page-course -->
+
+
+    <!-- =============================
+         SUB-SECTION PAGE (Notes list, etc.)
+         এই page এ নির্দিষ্ট notes/assignments এর list দেখায়
+    ============================== -->
+    <div class="page" id="page-subsection">
+      <button class="back-btn" id="subBackBtn">← Back</button>
+      <div class="breadcrumb" id="subBreadcrumb"></div>
+      <div class="section-header">
+        <div>
+          <div class="section-title" id="subTitle">Notes</div>
+          <div class="section-desc" id="subDesc"></div>
+        </div>
+      </div>
+      <div class="card-grid card-grid-sm" id="subItemsGrid"></div>
+    </div><!-- /page-subsection -->
+
+
+    <!-- =============================
+         NOTE/CONTENT VIEWER PAGE
+         যখন একটা note click করা হয়, এই page এ সম্পূর্ণ content দেখায়
+    ============================== -->
+    <div class="page" id="page-note">
+      <button class="back-btn" id="noteBackBtn">← Back</button>
+      <div class="breadcrumb" id="noteBreadcrumb"></div>
+      <div class="content-viewer">
+        <div class="content-header">
+          <div class="content-title" id="noteTitle">Note Title</div>
+          <div class="content-meta-row">
+            <span id="noteCourse">Course</span>
+            <span>·</span>
+            <span id="noteDate">Date</span>
+            <span>·</span>
+            <span id="noteReadTime">5 min read</span>
+          </div>
+          <div style="margin-top:1rem; display:flex; gap:6px; flex-wrap:wrap;" id="noteTags"></div>
+        </div>
+        <!-- Content render হবে এখানে -->
+        <div class="content-body" id="noteBody"></div>
+
+        <!-- PDF SECTION — যদি note এ PDF থাকে তাহলে এখানে দেখাবে -->
+        <div id="notePdfSection"></div>
+
+        <!-- Prerequisite section -->
+        <div class="prereq-section" id="prereqSection">
+          <div class="prereq-box">
+            <div class="prereq-box-title">Prerequisites — জানা থাকতে হবে</div>
+            <div id="prereqList"></div>
+          </div>
+          <div class="prereq-box">
+            <div class="prereq-box-title">Next Topics — এর পরে পড়ো</div>
+            <div id="nextList"></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /page-note -->
+
+
+    <!-- =============================
+         BLOG VIEWER PAGE
+    ============================== -->
+    <div class="page" id="page-blog">
+      <button class="back-btn" onclick="showPage('extra')">← Back to Blogs</button>
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item" onclick="showPage('extra')">Extra Curricular</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current" id="blogBreadcrumbCurrent">Blog</span>
+      </div>
+      <div class="content-viewer">
+        <div class="content-header">
+          <!-- Blog cover emoji/image -->
+          <div id="blogCover" style="font-size:4rem; margin-bottom:1.5rem;"></div>
+          <div class="content-title" id="blogTitle">Blog Title</div>
+          <div class="content-meta-row">
+            <span id="blogDate">Date</span>
+            <span>·</span>
+            <span id="blogReadTime">5 min read</span>
+          </div>
+          <div style="margin-top:1rem; display:flex; gap:6px; flex-wrap:wrap;" id="blogTags"></div>
+        </div>
+        <div class="content-body" id="blogBody"></div>
+      </div>
+    </div><!-- /page-blog -->
+
+  </div><!-- /page-wrapper -->
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span class="footer-brand">Muntasir · CSE @ UIU</span>
+    <span>Built with HTML, CSS & JS · Hosted on GitHub Pages</span>
+  </footer>
+
+
+  <!-- ============================================================
+       JAVASCRIPT — সব functionality এখানে
+       ============================================================
+       
+       কিভাবে কাজ করে:
+       1. `pages` object এ সব page এর ID আছে
+       2. `showPage(id)` function দিয়ে page switch হয়
+       3. `courseData` object এ সব course এর তথ্য আছে
+       4. `notesData` object এ সব note এর content আছে
+       5. `blogsData` object এ সব blog এর content আছে
+       6. Search function সব data তে keyword খোঁজে
+  ============================================================ -->
+  <script>
+
+    // =============================================
+    // NAVIGATION — Page switching system
+    // =============================================
+
+    // বর্তমান active page track করা হয়
+    let currentPage = 'home';
+    // Course page থেকে back এ গেলে কোন section এ যাবে
+    let currentSection = 'home';
+    // Sub-section থেকে back এ গেলে course page এ যাবে
+    let currentCourse  = null;
+    // Note page থেকে back এ গেলে sub-section এ যাবে
+    let currentSubSection = null;
+
+    // showPage: page এর id দিলে সেই page টা দেখাবে, বাকিগুলো লুকাবে
+    function showPage(id) {
+      // সব page hide করো
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      // নির্দিষ্ট page show করো
+      document.getElementById('page-' + id).classList.add('active');
+      currentPage = id;
+      // উপরে scroll করো
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Search bar শুধু home page এ দেখাবে
+      document.getElementById('searchContainer').style.display =
+        id === 'home' ? 'block' : 'none';
+    }
+
+    // Hamburger menu toggle
+    function toggleNav() {
+      document.getElementById('navOverlay').classList.toggle('open');
+    }
+
+    // =============================================
+    // COURSE DATA — সব course এর information
+    // =============================================
+    // নতুন course যোগ করতে হলে এই object এ add করো
+    const courseData = {
+      'fund-calc': {
+        title: 'Fundamental Calculus',
+        desc: 'CSE 1101 — First semester mathematics',
+        section: 'math',
+        sectionName: 'Math',
+        notes:       ['Limits & Continuity', 'Derivatives — Basic Rules', 'Chain Rule', 'Integration Basics', 'Definite Integrals', 'Area Under Curve', 'Taylor Series', 'L\'Hopital\'s Rule'],
+        assignments: ['Assignment 1 — Limits', 'Assignment 2 — Derivatives', 'Assignment 3 — Integration'],
+        solves:      ['Midterm 2022 Solutions', 'Final 2022 Solutions', 'Practice Problem Set 1']
+      },
+      'vector-calc': {
+        title: 'Vector Calculus',
+        desc: 'CSE 1201 — Second semester mathematics',
+        section: 'math',
+        sectionName: 'Math',
+        notes:       ['Vector Functions', 'Gradient & Directional Derivative', 'Divergence & Curl', 'Line Integrals', 'Surface Integrals', 'Green\'s Theorem', 'Stokes\' Theorem', 'Gauss\' Divergence Theorem', 'Conservative Fields', 'Parametric Surfaces', 'Flux Integrals', 'Green\'s Functions'],
+        assignments: ['Assignment 1 — Vectors', 'Assignment 2 — Line Integrals', 'Assignment 3 — Green\'s Theorem'],
+        solves:      ['Midterm 2023 Solutions', 'Final 2023 Solutions', 'Green\'s Theorem Practice']
+      },
+      'diff-eq': {
+        title: 'Differential Equation',
+        desc: 'CSE 2101 — Third semester mathematics',
+        section: 'math',
+        sectionName: 'Math',
+        notes:       ['Introduction to ODEs', 'Separation of Variables', 'First Order Linear ODE', 'Exact Equations', 'Second Order ODE', 'Laplace Transform', 'Inverse Laplace', 'Series Solutions', 'PDE Introduction', 'Heat Equation'],
+        assignments: ['Assignment 1 — First Order', 'Assignment 2 — Second Order'],
+        solves:      ['Midterm Solutions', 'Final Solutions']
+      },
+      'linear-alg': {
+        title: 'Linear Algebra',
+        desc: 'CSE 2201 — Linear algebra and matrix theory',
+        section: 'math',
+        sectionName: 'Math',
+        notes:       ['Vectors & Vector Spaces', 'Matrix Operations', 'Determinants', 'Inverse Matrix', 'Linear Transformations', 'Eigenvalues & Eigenvectors', 'Diagonalization', 'Gram-Schmidt Process', 'Singular Value Decomposition'],
+        assignments: ['Matrix Operations Assignment', 'Eigenvalue Problems'],
+        solves:      ['Midterm Solutions', 'Final Solutions', 'Extra Practice']
+      },
+      'num-analysis': {
+        title: 'Numerical Analysis',
+        desc: 'CSE 3101 — Computational methods',
+        section: 'math',
+        sectionName: 'Math',
+        notes:       ['Error Analysis', 'Bisection Method', 'Newton-Raphson Method', 'Interpolation', 'Numerical Differentiation', 'Numerical Integration', 'Gaussian Elimination'],
+        assignments: ['Root Finding Assignment', 'Interpolation Assignment'],
+        solves:      ['Practice Problems Set']
+      },
+      'c-prog': {
+        title: 'C Programming',
+        desc: 'CSE 1001 — First programming course',
+        section: 'prog',
+        sectionName: 'Programming',
+        notes:       ['Variables & Data Types', 'Operators & Expressions', 'Control Flow (if/else)', 'Loops (for, while)', 'Functions', 'Arrays', 'Pointers', 'Strings', 'Structures', 'File I/O', 'Dynamic Memory', 'Recursion', 'Sorting Algorithms', 'Searching', 'Preprocessor Directives'],
+        assignments: ['Lab 1 — Hello World to Basics', 'Lab 2 — Functions & Arrays', 'Lab 3 — Pointers & Strings', 'Lab 4 — Structures & Files'],
+        solves:      ['Midterm Problem Solutions', 'Final Exam Solutions', 'Lab Quiz Solutions', 'Practice OJ Problems']
+      },
+      'ds': {
+        title: 'Data Structure',
+        desc: 'CSE 2001 — Core data structure course',
+        section: 'prog',
+        sectionName: 'Programming',
+        notes:       ['Arrays & Dynamic Arrays', 'Linked List — Singly', 'Linked List — Doubly', 'Stack', 'Queue', 'Binary Tree', 'Binary Search Tree', 'AVL Tree', 'Heap', 'Hash Table', 'Graph — BFS', 'Graph — DFS', 'Tries', 'Disjoint Set Union', 'Segment Tree', 'Fenwick Tree', 'Sparse Table', 'String Hashing'],
+        assignments: ['Assignment 1 — Linked Lists', 'Assignment 2 — Trees', 'Assignment 3 — Graphs', 'Assignment 4 — Hashing'],
+        solves:      ['Midterm Solutions', 'Final Solutions', 'Lab Problem Solutions', 'OJ Practice Set']
+      },
+      'algo': {
+        title: 'Algorithm',
+        desc: 'CSE 2002 — Algorithm design and analysis',
+        section: 'prog',
+        sectionName: 'Programming',
+        notes:       ['Big-O Notation', 'Recursion & Backtracking', 'Divide & Conquer', 'Merge Sort', 'Quick Sort', 'Greedy Algorithms', 'Dynamic Programming — Intro', 'DP — Knapsack', 'DP — LCS', 'Graph Algorithms', 'Dijkstra', 'Bellman-Ford', 'Floyd-Warshall', 'Minimum Spanning Tree'],
+        assignments: ['Sorting Assignment', 'DP Problems Set', 'Graph Problems Set'],
+        solves:      ['Midterm Solutions', 'Final Solutions']
+      },
+      'oop': {
+        title: 'Object Oriented Programming',
+        desc: 'CSE 2003 — OOP using Java',
+        section: 'prog',
+        sectionName: 'Programming',
+        notes:       ['Classes & Objects', 'Encapsulation', 'Constructors', 'Inheritance', 'Polymorphism', 'Abstraction', 'Interfaces', 'Exception Handling', 'Collections Framework', 'Generics', 'Java I/O'],
+        assignments: ['Lab 1 — Classes', 'Lab 2 — Inheritance', 'Lab 3 — Polymorphism'],
+        solves:      ['Midterm Solutions', 'Final Solutions']
+      },
+      'db': {
+        title: 'Database Management',
+        desc: 'CSE 3001 — DBMS fundamentals',
+        section: 'prog',
+        sectionName: 'Programming',
+        notes:       ['Database Concepts', 'ER Diagram', 'Relational Model', 'SQL — DDL', 'SQL — DML', 'SQL — Joins', 'Normalization 1NF 2NF 3NF', 'Transactions', 'Concurrency Control', 'Indexing'],
+        assignments: ['ER Diagram Assignment', 'SQL Query Assignment'],
+        solves:      ['Midterm Solutions', 'Final Solutions']
+      },
+      'webdev': {
+        title: 'Web Development',
+        desc: 'CSE 3002 — Modern web technologies',
+        section: 'prog',
+        sectionName: 'Programming',
+        notes:       ['HTML Basics', 'HTML5 Semantics', 'CSS Fundamentals', 'CSS Flexbox', 'CSS Grid', 'CSS Animations', 'JavaScript Basics', 'DOM Manipulation', 'Fetch API & AJAX', 'React Introduction', 'React Hooks', 'Node.js Basics', 'Express.js', 'REST API', 'HTTP Protocol', 'Authentication', 'Deployment', 'Version Control — Git', 'Responsive Design', 'Performance Optimization'],
+        assignments: ['HTML/CSS Portfolio', 'JavaScript Project', 'React App', 'Full-stack Mini Project'],
+        solves:      ['Quiz Solutions', 'Lab Solutions']
+      },
+      'economics': {
+        title: 'Economics',
+        desc: 'GEN 1001 — Introductory economics',
+        section: 'nondept',
+        sectionName: 'Non Department',
+        notes:       ['Supply & Demand', 'Market Equilibrium', 'Elasticity', 'Consumer Theory', 'GDP & National Income', 'Inflation'],
+        assignments: ['Microeconomics Assignment', 'Macroeconomics Assignment'],
+        solves:      ['Midterm Solutions', 'Final Solutions']
+      },
+      'sociology': {
+        title: 'Sociology',
+        desc: 'GEN 1002 — Social structures and dynamics',
+        section: 'nondept',
+        sectionName: 'Non Department',
+        notes:       ['Society & Culture', 'Social Stratification', 'Social Institutions', 'Socialization', 'Social Change'],
+        assignments: ['Essay Assignment'],
+        solves:      ['Term Paper']
+      },
+      'comm-skills': {
+        title: 'Communication Skills',
+        desc: 'GEN 1003 — Professional communication',
+        section: 'nondept',
+        sectionName: 'Non Department',
+        notes:       ['Effective Writing', 'Paragraph Writing', 'Essay Writing', 'Email Writing', 'Presentation Skills', 'Resume Writing', 'Interview Skills', 'Report Writing'],
+        assignments: ['Essay 1', 'Presentation Assignment', 'Resume Assignment'],
+        solves:      ['Practice Exercises']
+      },
+      'bangla': {
+        title: 'Bangla Language',
+        desc: 'GEN 1004 — Bangla grammar and literature',
+        section: 'nondept',
+        sectionName: 'Non Department',
+        notes:       ['Bangla Grammar', 'Composition Writing', 'Literature Overview', 'Poetry Analysis'],
+        assignments: ['Praban Rachana', 'Patra Lekha'],
+        solves:      ['Midterm Solutions']
+      }
+    };
+
+    // =============================================
+    // COURSE PAGE — Course click করলে এই function চলে
+    // =============================================
+    function showCourse(courseId) {
+      const d = courseData[courseId];
+      if (!d) return;
+
+      currentCourse = courseId;
+      currentSection = d.section;
+
+      // Page title ও description set করো
+      document.getElementById('courseTitle').textContent = d.title;
+      document.getElementById('courseDesc').textContent  = d.desc;
+      document.getElementById('notesCount').textContent  = d.notes.length + ' notes';
+      document.getElementById('assignCount').textContent = d.assignments.length + ' assignments';
+      document.getElementById('solvesCount').textContent = d.solves.length + ' problems';
+
+      // Back button এ section এর নাম দেখাবে
+      document.getElementById('courseBackBtn').textContent = '← ' + d.sectionName;
+      document.getElementById('courseBackBtn').onclick = () => showPage(d.section);
+
+      // Breadcrumb set করো
+      document.getElementById('courseBreadcrumb').innerHTML = `
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item" onclick="showPage('${d.section}')">${d.sectionName}</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">${d.title}</span>
+      `;
+
+      showPage('course');
+    }
+
+    // =============================================
+    // SUB-SECTION — Notes/Assignments/Solves list
+    // =============================================
+    function showSubSection(type) {
+      if (!currentCourse) return;
+      const d = courseData[currentCourse];
+      currentSubSection = type;
+
+      // কোন type এর items দেখাবো
+      let items, title, desc;
+      if (type === 'notes') {
+        items = d.notes;
+        title = '📝 Notes';
+        desc  = d.title + ' — All notes';
+      } else if (type === 'assignments') {
+        items = d.assignments;
+        title = '📋 Assignments';
+        desc  = d.title + ' — All assignments';
+      } else {
+        items = d.solves;
+        title = '✅ Question Solves';
+        desc  = d.title + ' — Solved problems';
+      }
+
+      document.getElementById('subTitle').textContent = title;
+      document.getElementById('subDesc').textContent  = desc;
+
+      // প্রতিটা item এর জন্য card তৈরি করো
+      const grid = document.getElementById('subItemsGrid');
+      grid.innerHTML = items.map((item, i) => `
+        <div class="card" onclick="openSubItem('${type}', ${i}, '${currentCourse}')">
+          <span class="card-icon">${type === 'notes' ? '📄' : type === 'assignments' ? '📋' : '✅'}</span>
+          <div class="card-title">${item}</div>
+          <div class="card-meta"><span class="tag tag-accent">${d.title}</span></div>
+        </div>
+      `).join('');
+
+      document.getElementById('subBackBtn').textContent = '← ' + d.title;
+      document.getElementById('subBackBtn').onclick = () => showCourse(currentCourse);
+
+      document.getElementById('subBreadcrumb').innerHTML = `
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item" onclick="showPage('${d.section}')">${d.sectionName}</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item" onclick="showCourse('${currentCourse}')">${d.title}</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">${title}</span>
+      `;
+
+      showPage('subsection');
+    }
+
+    // =============================================
+    // NOTE DATA — Sample notes এর content
+    // =============================================
+    // এখানে সব notes এর content define করা আছে।
+    // নতুন note যোগ করতে এই object এ add করো।
+    const notesData = {
+      'greens-theorem': {
+        title: "Green's Theorem",
+        course: 'Vector Calculus',
+        courseId: 'vector-calc',
+        section: 'math',
+        date: 'December 10, 2024',
+        readTime: '8 min read',
+        tags: ['Vector Calculus', 'Integration', 'Line Integrals'],
+        /*
+          PDF যোগ করার নিয়ম:
+          ১. তোমার project folder এ "pdfs" নামে folder বানাও
+          ২. PDF টা ওই folder এ রাখো
+          ৩. নিচে path দাও এভাবে: 'pdfs/তোমার-ফাইলের-নাম.pdf'
+
+          PDF না থাকলে এই line টা মুছে দাও অথবা pdfLink: null লিখো
+        */
+        pdfLink: 'pdfs/greens-theorem.pdf',
+        prereqs: ["Line Integrals", "Partial Derivatives", "Vector Fields"],
+        next: ["Stokes' Theorem", "Gauss' Divergence Theorem", "Conservative Fields"],
+        body: `
+          <h2>What is Green's Theorem?</h2>
+          <p>Green's Theorem এ বলা হয় যে একটা closed curve এর line integral কে সেই curve এ ঘেরা region এর double integral এ convert করা যায়।</p>
+
+          <div class="math-block">
+            ∮<sub>C</sub> (P dx + Q dy) = ∬<sub>D</sub> (∂Q/∂x − ∂P/∂y) dA
+          </div>
+
+          <div class="info-box">
+            <strong>মনে রাখো:</strong> C হলো counterclockwise orientation এ closed curve, আর D হলো সেই curve এর bounded region।
+          </div>
+
+          <h2>Conditions for Green's Theorem</h2>
+          <ul>
+            <li>C অবশ্যই piecewise smooth, simple closed curve হতে হবে</li>
+            <li>P এবং Q এর প্রথম order partial derivatives D তে continuous হতে হবে</li>
+            <li>C কে counterclockwise (positive orientation) এ traverse করতে হবে</li>
+          </ul>
+
+          <h2>Example Problem</h2>
+          <p>Evaluate ∮<sub>C</sub> (x² dx + xy dy) যেখানে C হলো (0,0), (1,0), (1,1), (0,1) vertices এর square।</p>
+
+          <p><strong>Solution:</strong></p>
+          <p>P = x², Q = xy হলে:</p>
+          <div class="math-block">
+            ∂Q/∂x = y<br>
+            ∂P/∂y = 0<br><br>
+            ∬<sub>D</sub> (y − 0) dA = ∫₀¹ ∫₀¹ y dy dx = ∫₀¹ [y²/2]₀¹ dx = ∫₀¹ 1/2 dx = <strong>1/2</strong>
+          </div>
+
+          <h2>Geometric Interpretation</h2>
+          <p>Green's Theorem কে flux-divergence form এও লেখা যায়:</p>
+          <div class="math-block">
+            ∮<sub>C</sub> F⃗ · n⃗ ds = ∬<sub>D</sub> div(F⃗) dA
+          </div>
+          <p>এটা আমাদের বলে যে একটা region থেকে বের হওয়া মোট flux = সেই region এর divergence এর integral।</p>
+
+          <h2>Key Takeaways</h2>
+          <ol>
+            <li>Line integral → Double integral conversion সহজ করে</li>
+            <li>Area calculation এ ব্যবহার হয়</li>
+            <li>Stokes' Theorem এর 2D special case</li>
+          </ol>
+        `
+      },
+      'bst': {
+        title: "Binary Search Tree",
+        course: 'Data Structure',
+        courseId: 'ds',
+        section: 'prog',
+        date: 'December 8, 2024',
+        readTime: '10 min read',
+        tags: ['Data Structure', 'Trees', 'Algorithms'],
+        prereqs: ["Binary Tree Basics", "Recursion", "Pointers"],
+        next: ["AVL Tree", "Red-Black Tree", "Tree Traversals"],
+        body: `
+          <h2>Binary Search Tree কী?</h2>
+          <p>BST হলো এমন একটা binary tree যেখানে প্রতিটা node এর জন্য:</p>
+          <ul>
+            <li>বাম subtree এর সব values < current node এর value</li>
+            <li>ডান subtree এর সব values > current node এর value</li>
+          </ul>
+
+          <div class="info-box">
+            <strong>BST Property:</strong> Inorder traversal করলে sorted order এ values পাওয়া যায়!
+          </div>
+
+          <h2>BST Operations</h2>
+
+          <h3>Search — O(h) time</h3>
+          <pre>Node* search(Node* root, int key) {
+    if (root == NULL || root->val == key)
+        return root;
+    if (key < root->val)
+        return search(root->left, key);
+    return search(root->right, key);
+}</pre>
+
+          <h3>Insert — O(h) time</h3>
+          <pre>Node* insert(Node* root, int key) {
+    if (root == NULL)
+        return new Node(key);
+    if (key < root->val)
+        root->left = insert(root->left, key);
+    else
+        root->right = insert(root->right, key);
+    return root;
+}</pre>
+
+          <h2>Time Complexity</h2>
+          <ul>
+            <li>Average case: O(log n) for search, insert, delete</li>
+            <li>Worst case (skewed tree): O(n)</li>
+            <li>Balanced BST (AVL): always O(log n)</li>
+          </ul>
+
+          <h2>Important Notes</h2>
+          <p>যদি tree skewed হয়ে যায় (sorted order তে insert করলে), তাহলে BST essentially একটা linked list হয়ে যায় এবং performance O(n) হয়। এই সমস্যা এড়াতে AVL Tree বা Red-Black Tree use করা হয়।</p>
+        `
+      },
+      'diff-eq': {
+        title: "Introduction to Differential Equations",
+        course: 'Differential Equation',
+        courseId: 'diff-eq',
+        section: 'math',
+        date: 'December 5, 2024',
+        readTime: '6 min read',
+        tags: ['ODE', 'Mathematics', 'Differential Equation'],
+        prereqs: ["Calculus", "Integration", "Functions"],
+        next: ["Separation of Variables", "First Order Linear ODE", "Second Order ODE"],
+        body: `
+          <h2>Differential Equation কী?</h2>
+          <p>Differential equation হলো এমন একটা equation যেখানে একটা function এবং তার derivatives থাকে।</p>
+          <div class="math-block">dy/dx = f(x, y)</div>
+
+          <h2>Types of ODE</h2>
+          <ul>
+            <li><strong>Order:</strong> highest derivative এর order অনুযায়ী (1st order, 2nd order, ...)</li>
+            <li><strong>Degree:</strong> highest order derivative এর power</li>
+            <li><strong>Linear vs Non-linear:</strong> dependent variable এবং তার derivatives linear হলে linear</li>
+          </ul>
+
+          <h2>Example</h2>
+          <div class="math-block">dy/dx = 2x<br><br>এটা solve করলে: y = x² + C</div>
+
+          <div class="info-box">
+            <strong>General vs Particular Solution:</strong> C যুক্ত solution general, initial condition দিলে particular solution পাওয়া যায়।
+          </div>
+        `
+      },
+      'oop-inheritance': {
+        title: "Inheritance in OOP",
+        course: 'Object Oriented Programming',
+        courseId: 'oop',
+        section: 'prog',
+        date: 'November 28, 2024',
+        readTime: '7 min read',
+        tags: ['OOP', 'Java', 'Inheritance'],
+        prereqs: ["Classes & Objects", "Encapsulation", "Constructors"],
+        next: ["Polymorphism", "Abstract Classes", "Interfaces"],
+        body: `
+          <h2>Inheritance কী?</h2>
+          <p>Inheritance হলো OOP এর একটা fundamental concept যেখানে একটা class অন্য class এর properties ও methods পায়। যে class থেকে নেওয়া হয় সেটা <code>parent/super class</code>, আর যে নেয় সেটা <code>child/sub class</code>।</p>
+
+          <h2>Java তে Inheritance</h2>
+          <pre>class Animal {
+    String name;
+    void eat() {
+        System.out.println(name + " is eating");
+    }
+}
+
+class Dog extends Animal {
+    void bark() {
+        System.out.println(name + " says Woof!");
+    }
+}
+
+// Usage:
+Dog dog = new Dog();
+dog.name = "Rocky";
+dog.eat();  // inherited from Animal
+dog.bark(); // Dog's own method</pre>
+
+          <h2>Types of Inheritance</h2>
+          <ul>
+            <li><strong>Single:</strong> A → B (Java তে সবচেয়ে common)</li>
+            <li><strong>Multi-level:</strong> A → B → C</li>
+            <li><strong>Hierarchical:</strong> A → B, A → C</li>
+          </ul>
+
+          <div class="info-box">
+            <strong>Note:</strong> Java তে Multiple Inheritance (C → A, B) সরাসরি support করে না — diamond problem এড়াতে। কিন্তু Interfaces দিয়ে করা যায়।
+          </div>
+        `
+      }
+    };
+
+    // Sub-item click করলে (list থেকে) note দেখাবে
+    function openSubItem(type, index, courseId) {
+      const d = courseData[courseId];
+      const itemName = d[type][index];
+      // Check করো এই item এর note data আছে কিনা
+      // Slug বানাও (lowercase, spaces → dashes)
+      const slug = itemName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      if (notesData[slug]) {
+        openNote(slug);
+      } else {
+        // Data না থাকলে placeholder দেখাও
+        openNotePlaceholder(itemName, d, type);
+      }
+    }
+
+    // Specific note direct open করার জন্য (recent notes থেকে)
+    function openNote(slug) {
+      const note = notesData[slug];
+      if (!note) return;
+
+      document.getElementById('noteTitle').textContent   = note.title;
+      document.getElementById('noteCourse').textContent  = note.course;
+      document.getElementById('noteDate').textContent    = note.date;
+      document.getElementById('noteReadTime').textContent = note.readTime;
+      document.getElementById('noteBody').innerHTML      = note.body;
+
+      // Tags render করো
+      document.getElementById('noteTags').innerHTML = note.tags
+        .map(t => `<span class="tag tag-accent">${t}</span>`).join('');
+
+      // -----------------------------------------------
+      // PDF SECTION RENDER
+      // -----------------------------------------------
+      // note এ pdfLink থাকলে PDF embed করো, না থাকলে লুকাও
+      const pdfSection = document.getElementById('notePdfSection');
+      if (note.pdfLink) {
+        // pdfLink থাকলে browser এর ভেতরেই PDF দেখাবে
+        const fileName = note.pdfLink.split('/').pop(); // path থেকে শুধু file name বের করো
+        pdfSection.innerHTML = `
+          <div class="pdf-section">
+            <div class="pdf-toolbar">
+              <div class="pdf-toolbar-left">
+                <span class="pdf-icon">📄</span>
+                <span>${fileName}</span>
+              </div>
+              <a href="${note.pdfLink}" download class="pdf-download-btn">
+                ⬇ Download PDF
+              </a>
+            </div>
+            <!--
+              iframe দিয়ে PDF embed করা হচ্ছে।
+              src তে PDF এর path দেওয়া হয়েছে।
+              Browser automatically PDF দেখাবে।
+            -->
+            <iframe
+              src="${note.pdfLink}"
+              class="pdf-embed"
+              title="${note.title} PDF"
+            ></iframe>
+          </div>
+        `;
+      } else {
+        // PDF নেই — placeholder দেখাও
+        pdfSection.innerHTML = `
+          <div class="pdf-section" style="margin-top:2rem;">
+            <div class="pdf-placeholder">
+              <div class="pdf-placeholder-icon">📎</div>
+              <div>কোনো PDF attach করা নেই</div>
+              <div style="margin-top:6px; font-size:11px; color:var(--text-muted);">
+                notesData তে pdfLink যোগ করলে এখানে দেখাবে
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Prerequisites render করো
+      document.getElementById('prereqList').innerHTML = note.prereqs
+        .map(p => `<div class="prereq-item"><span class="prereq-check">✔</span><span>${p}</span></div>`).join('');
+
+      // Next topics render করো
+      document.getElementById('nextList').innerHTML = note.next
+        .map(n => `<div class="prereq-item"><span class="prereq-arrow">➜</span><span>${n}</span></div>`).join('');
+
+      // Breadcrumb set করো
+      document.getElementById('noteBreadcrumb').innerHTML = `
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item" onclick="showPage('${note.section}')">${note.course}</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">${note.title}</span>
+      `;
+
+      // Back button
+      document.getElementById('noteBackBtn').textContent = '← ' + note.course;
+      document.getElementById('noteBackBtn').onclick = () => showCourse(note.courseId);
+
+      showPage('note');
+    }
+
+    // Placeholder note (যেগুলোর content এখনো লেখা হয়নি)
+    function openNotePlaceholder(name, courseObj, type) {
+      document.getElementById('noteTitle').textContent   = name;
+      document.getElementById('noteCourse').textContent  = courseObj.title;
+      document.getElementById('noteDate').textContent    = 'Coming soon';
+      document.getElementById('noteReadTime').textContent = '';
+      document.getElementById('noteTags').innerHTML      = `<span class="tag tag-accent">${courseObj.title}</span>`;
+      document.getElementById('noteBody').innerHTML      = `
+        <div class="info-box">
+          <strong>📝 Note Coming Soon!</strong><br><br>
+          এই note টা এখনো লেখা হয়নি। তুমি এখানে content যোগ করতে পারো!<br><br>
+          <strong>কিভাবে যোগ করবে:</strong><br>
+          JavaScript এর <code>notesData</code> object এ নতুন entry যোগ করো।
+        </div>
+      `;
+      document.getElementById('prereqList').innerHTML  = '';
+      document.getElementById('nextList').innerHTML    = '';
+      document.getElementById('noteBreadcrumb').innerHTML = `
+        <span class="breadcrumb-item" onclick="showPage('home')">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">${name}</span>
+      `;
+      document.getElementById('noteBackBtn').textContent = '← Back';
+      document.getElementById('noteBackBtn').onclick = () => showPage('subsection');
+      showPage('note');
+    }
+
+    // =============================================
+    // BLOG DATA — সব blog এর content
+    // =============================================
+    const blogsData = {
+      'bandarban': {
+        title: 'Bandarban Tour 2024',
+        date: 'December 15, 2024',
+        readTime: '6 min read',
+        cover: '🏔️',
+        tags: ['Travel', 'Friends', 'Trekking', 'Adventure'],
+        body: `
+          <h2>শুরুর গল্প</h2>
+          <p>December এর শীতের সকালে ১৫ জন বন্ধু মিলে Bandarban এর উদ্দেশ্যে রওনা দিলাম। রাত ১০টার বাস, Dhaka থেকে প্রায় ৮ ঘণ্টার journey।</p>
+
+          <h2>প্রথম দিন — Nilgiri</h2>
+          <p>সকালে Bandarban পৌঁছে সরাসরি চাঁদের গাড়িতে করে Nilgiri এর পথে। ২৩০০ ফুট উচ্চতায় মেঘের মাঝে দাঁড়িয়ে থাকার অনুভূতি অসাধারণ।</p>
+
+          <div class="info-box">
+            <strong>Nilgiri Tips:</strong> সকাল ৭টার আগে গেলে মেঘ বেশি পাওয়া যায়। Entry fee: ৩০০ টাকা।
+          </div>
+
+          <h2>দ্বিতীয় দিন — Chimbuk & Trekking</h2>
+          <p>Chimbuk hill এ sunrise দেখে পরে local guide এর সাথে trekking। ঘন জঙ্গলের মধ্যে দিয়ে ৪ ঘণ্টার trail — জীবনে ভোলার মতো না।</p>
+
+          <h2>তৃতীয় দিন — Boga Lake</h2>
+          <p>Boga Lake — প্রকৃতির অপূর্ব সৃষ্টি। চারদিকে পাহাড়, মাঝে নীল পানির হ্রদ। ট্রেকিং করে পৌঁছানোর পর সব ক্লান্তি দূর হয়ে গেল।</p>
+
+          <h2>Lessons Learned</h2>
+          <ul>
+            <li>অনলাইনে হোটেল আগেই book করে যাও — season এ অনেক ভিড়</li>
+            <li>Extra warm কাপড় নাও, রাতে অনেক ঠান্ডা</li>
+            <li>Local guide hire করা worth it</li>
+            <li>Power bank আর extra memory card আবশ্যক</li>
+          </ul>
+        `
+      },
+      'debate': {
+        title: 'Inter-University Debate Competition',
+        date: 'November 20, 2024',
+        readTime: '5 min read',
+        cover: '🎤',
+        tags: ['Competition', 'Public Speaking', 'AI Ethics', 'UIU'],
+        body: `
+          <h2>Topic: "AI Will Replace Human Intelligence"</h2>
+          <p>UIU Debate Club এর হয়ে Inter-University Debate Competition এ participate করলাম। আমাদের topic ছিল AI এর ethical implications নিয়ে।</p>
+
+          <h2>Preparation Phase</h2>
+          <p>২ সপ্তাহ ধরে prepare করলাম। প্রতিদিন ২ ঘণ্টা research, argument preparation, আর mock debate। Team এ আমরা ৩ জন ছিলাম।</p>
+
+          <h2>The Competition</h2>
+          <p>আমরা Opposition side ছিলাম — argue করলাম যে AI হলো tool, human intelligence কে replace করার ক্ষমতা তার নেই। Critical thinking, creativity, emotional intelligence — এগুলো fundamentally human।</p>
+
+          <div class="info-box">
+            <strong>Key Argument:</strong> AI can optimize for defined objectives, but cannot define its own objectives. The 'what' and 'why' will always require human judgment.
+          </div>
+
+          <h2>Result</h2>
+          <p>আমরা Runner-up হলাম। হারলাম final এ BRAC University এর কাছে — কিন্তু experience টা অমূল্য। Public speaking confidence অনেক বেড়েছে।</p>
+        `
+      },
+      'science-fair': {
+        title: 'UIU Science Fair 2024 — Smart Plant Watering System',
+        date: 'October 5, 2024',
+        readTime: '7 min read',
+        cover: '🔬',
+        tags: ['Science', 'Arduino', 'IoT', 'Project'],
+        body: `
+          <h2>Project Idea</h2>
+          <p>বাসায় গাছ পানি না পেয়ে মরে যায় — এই সমস্যা থেকেই idea। Arduino দিয়ে একটা automated plant watering system বানালাম।</p>
+
+          <h2>Components Used</h2>
+          <ul>
+            <li>Arduino Uno</li>
+            <li>Soil moisture sensor</li>
+            <li>Water pump (5V mini)</li>
+            <li>LCD Display (16x2)</li>
+            <li>Jumper wires & breadboard</li>
+          </ul>
+
+          <h2>How It Works</h2>
+          <p>Soil moisture sensor মাটির আর্দ্রতা measure করে। যদি ৪০% এর নিচে নামে, Arduino water pump চালু করে। LCD তে real-time moisture percentage দেখায়।</p>
+
+          <pre>if (moistureValue < 400) {
+  // Soil is dry — water!
+  digitalWrite(PUMP_PIN, HIGH);
+  lcd.print("Watering...");
+} else {
+  digitalWrite(PUMP_PIN, LOW);
+  lcd.print("Moisture OK");
+}</pre>
+
+          <h2>Result</h2>
+          <p>🥈 Second place জিতলাম! Judges বিশেষভাবে practical utility এবং clean code এর প্রশংসা করলেন।</p>
+        `
+      },
+      'volunteering': {
+        title: 'Volunteering at ICPC Regional 2024',
+        date: 'September 10, 2024',
+        readTime: '4 min read',
+        cover: '🤝',
+        tags: ['Volunteering', 'ICPC', 'Programming', 'UIU'],
+        body: `
+          <h2>ICPC কী?</h2>
+          <p>International Collegiate Programming Contest — বিশ্বের সবচেয়ে বড় university-level programming competition। UIU তে regional round অনুষ্ঠিত হলো।</p>
+
+          <h2>আমার Role</h2>
+          <p>Technical volunteer হিসেবে কাজ করলাম। Contestants দের computer setup, network issues, আর judge system এ help করলাম।</p>
+
+          <h2>What I Observed</h2>
+          <p>Top programmers দের problem solving দেখে অবাক হয়ে গেলাম। যে problems আমার কাছে দুর্বোধ্য, সেগুলো তারা ২০ মিনিটে solve করছেন।</p>
+
+          <div class="info-box">
+            <strong>Motivation:</strong> এই event আমাকে competitive programming এ আরো serious হতে inspire করল। পরের বছর participant হিসেবে যাওয়ার target!
+          </div>
+
+          <h2>Skills Gained</h2>
+          <ul>
+            <li>Event management experience</li>
+            <li>Team coordination</li>
+            <li>Technical troubleshooting under pressure</li>
+            <li>Networking with top CS students</li>
+          </ul>
+        `
+      }
+    };
+
+    function openBlog(slug) {
+      const blog = blogsData[slug];
+      if (!blog) return;
+
+      document.getElementById('blogTitle').textContent   = blog.title;
+      document.getElementById('blogDate').textContent    = blog.date;
+      document.getElementById('blogReadTime').textContent = blog.readTime;
+      document.getElementById('blogCover').textContent   = blog.cover;
+      document.getElementById('blogBody').innerHTML      = blog.body;
+      document.getElementById('blogBreadcrumbCurrent').textContent = blog.title;
+      document.getElementById('blogTags').innerHTML = blog.tags
+        .map(t => `<span class="tag tag-green">${t}</span>`).join('');
+
+      showPage('blog');
+    }
+
+    // =============================================
+    // SEARCH FUNCTIONALITY
+    // =============================================
+    // সব searchable content একটা flat array তে রাখা হয়েছে
+    const searchIndex = [];
+
+    // Notes index করো
+    Object.entries(notesData).forEach(([slug, note]) => {
+      searchIndex.push({
+        type: 'note',
+        label: 'Note',
+        title: note.title,
+        subtitle: note.course,
+        action: () => openNote(slug)
+      });
+    });
+
+    // Blogs index করো
+    Object.entries(blogsData).forEach(([slug, blog]) => {
+      searchIndex.push({
+        type: 'blog',
+        label: 'Blog',
+        title: blog.title,
+        subtitle: blog.date,
+        action: () => openBlog(slug)
+      });
+    });
+
+    // Course names index করো
+    Object.entries(courseData).forEach(([id, course]) => {
+      searchIndex.push({
+        type: 'course',
+        label: 'Course',
+        title: course.title,
+        subtitle: course.desc,
+        action: () => showCourse(id)
+      });
+      // Course এর individual notes ও index করো
+      course.notes.forEach(n => {
+        searchIndex.push({
+          type: 'note',
+          label: 'Note',
+          title: n,
+          subtitle: course.title,
+          action: () => showCourse(id) // সেই course এ নিয়ে যাবে
+        });
+      });
+      course.assignments.forEach(a => {
+        searchIndex.push({
+          type: 'assignment',
+          label: 'Assignment',
+          title: a,
+          subtitle: course.title,
+          action: () => showCourse(id)
+        });
+      });
+    });
+
+    // Search input এ type করলে এই function চলে
+    const searchInput = document.getElementById('searchInput');
+    const searchResultsList = document.getElementById('searchResultsList');
+
+    searchInput.addEventListener('input', function () {
+      const query = this.value.trim().toLowerCase();
+      if (!query) {
+        searchResultsList.classList.remove('visible');
+        return;
+      }
+
+      // Filter: title বা subtitle এ query আছে কিনা দেখো
+      const results = searchIndex.filter(item =>
+        item.title.toLowerCase().includes(query) ||
+        item.subtitle.toLowerCase().includes(query)
+      ).slice(0, 8); // সর্বোচ্চ ৮টা result দেখাও
+
+      if (results.length === 0) {
+        searchResultsList.innerHTML = `<div style="padding:12px; color:var(--text-muted); font-size:13px; text-align:center;">No results found</div>`;
+      } else {
+        searchResultsList.innerHTML = results.map((r, i) => `
+          <div class="search-result-item" onclick="searchResults[${i}]()">
+            <span class="search-result-tag">${r.label}</span>
+            <div>
+              <div class="search-result-text">${r.title}</div>
+              <div style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">${r.subtitle}</div>
+            </div>
+          </div>
+        `).join('');
+        // Click handler reference
+        window.searchResults = results.map(r => () => {
+          r.action();
+          searchInput.value = '';
+          searchResultsList.classList.remove('visible');
+        });
+      }
+      searchResultsList.classList.add('visible');
+    });
+
+    // Search bar এর বাইরে click করলে results লুকাবে
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.search-container') && !e.target.closest('.search-results')) {
+        searchResultsList.classList.remove('visible');
+      }
+    });
+
+    // Initial page setup
+    showPage('home');
+  </script>
+
+</body>
+</html>
